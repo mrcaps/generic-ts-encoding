@@ -1,0 +1,6 @@
+.cproject
+.settings
+*.stackdump
+lib/*.a
+Debug
+Release

@@ -1,0 +1,5 @@
+{
+	"*.bp": "MulticolumnText",
+	"*.dat": "MulticolumnText",
+	"*.txt": "MulticolumnText"
+}

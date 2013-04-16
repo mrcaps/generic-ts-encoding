@@ -1,0 +1,45 @@
+Acknowledgements:
+
+Test data aggregated in UCR time series archive:
+	http://www.cs.ucr.edu/~eamonn/Keogh_Time_Series_CDrom.zip
+
+Original data sources:
+
+phone1.txt:	
+	TEA project (Starlab Research NV/SA, TecO, Nokia, Omega Generation)
+	http://www.teco.edu/tea/datasets/phone1.xls
+
+robot_arm_1.dat
+	Favoreel
+	KULeuven
+	Departement Electrotechniek ESAT/SISTA
+	Kardinaal Mercierlaan 94
+	B-3001 Leuven
+	Belgium
+	wouter.favoreel@esat.kuleuven.ac.be
+
+Population/*:
+	US census
+	Compiled by UCR
+	http://www.census.gov/population
+
+Vi_Chute_cote_pos.san:
+	XD Productions
+	http://www.xdprod.com/
+
+stocks.csv:
+	public stock price data
+
+superven1.txt
+	MIT-BIH Supraventricular Arrhythmia Database
+	http://www.physionet.org/physiobank/database/svdb/
+
+CAincome.txt
+	Data tables for Regional GDP & Personal Income
+	http://www.bea.gov/bea/regional/spi/
+
+stocks.dat
+	Maria Kontaki
+	Data Engineering Laboratory
+	Department of Informatics
+	Aristotle University

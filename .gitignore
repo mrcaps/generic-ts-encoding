@@ -1,0 +1,9 @@
+HW*
+libs
+old
+proposal
+report
+readings
+out.csv
+*.exe
+Makefile.local

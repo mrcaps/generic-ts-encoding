@@ -1,0 +1,7 @@
+[
+{
+	"paths":["population.txt"],
+	"format":"MulticolumnText",
+	"args":{"header":"true","timestamps":"year"}
+}
+]
