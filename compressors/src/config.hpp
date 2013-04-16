@@ -1,8 +1,7 @@
 /*
  * config.hpp
- *
- *  Created on: Apr 10, 2013
- *      Author: mrcaps
+ * @brief global configuration properties
+ * @author ishafer
  */
 
 #ifndef CONFIG_HPP_

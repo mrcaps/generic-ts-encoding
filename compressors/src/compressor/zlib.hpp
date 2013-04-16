@@ -1,8 +1,7 @@
 /*
  * zlib.hpp
- *
- *  Created on: Apr 11, 2013
- *      Author: ishafer
+ * @brief encode/decode wrapper around zlib
+ * @author ishafer
  */
 
 #ifndef ZLIB_HPP_

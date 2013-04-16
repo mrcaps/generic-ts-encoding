@@ -1,7 +1,6 @@
 /*
  * compressor.hpp
- *
- *
+ * @brief get compressors
  * @author ishafer
  */
 

@@ -1,7 +1,6 @@
 /**
  * delta.hpp
- * Delta encoder/decoder
- *
+ * @brief Delta encoder/decoder
  * @author ishafer
  */
 

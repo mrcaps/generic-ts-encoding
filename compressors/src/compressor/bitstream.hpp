@@ -1,5 +1,6 @@
 /**
  * bitstream.hpp
+ * @brief expandable bitstream with parameterized read/write type
  * @author ishafer
  */
 
@@ -132,8 +133,6 @@ public:
 
 		//bits of unaligned
 		while (mask > 0 && pos != nbits - 1) {
-			//cout << "write begin bit" << endl;
-			//cout << "begin bit " << ((bits & ((backing) 1 << (nbits - pos - 1))) > 0) << endl;
 			write_bit( (bits & (static_cast<rwsize>(1) << (nbits - pos - 1))) > 0 );
 			++pos;
 		}
@@ -141,17 +140,7 @@ public:
 		//blocks of middle bytes
 		for (; pos < nbits - backsize + 1; pos += backsize) {
 			++cur;
-
-			//cout << "pos=" << pos
-			//		<< " cur=" << (uint64_t) cur
-			//		<< " nbits=" << nbits
-			//		<< " backsize=" << (uint32_t) backsize
-			//		<< " nb-p-b=" << (nbits-pos) << endl;
-			//cout << "mid bits " << bitset<64>(bits >> (nbits - pos - backsize)) << endl;
-
 			*cur = (*cur) | (bits >> (nbits - pos - backsize));
-			//print_backing();
-			//cout << endl;
 		}
 
 		//bits after blocks
@@ -164,11 +153,8 @@ public:
 	void expand_backing() {
 		//expand bitstream by a factor of 1.5
 		// (ArrayList style)
-		//cout << "expand back from " << nvals << endl;
 		uint64_t newvals = nvals * 1.5 + sizeof(rwsize)/sizeof(backing);
 
-		//cout << "before:" << endl;
-		//print_backing(); cout << endl;
 		assert (cur <= end);
 		backing* res = (backing*) realloc(vals, sizeof(backing)*newvals);
 
@@ -181,16 +167,12 @@ public:
 			nvals = newvals;
 			end = vals + newvals;
 		}
-
-		//cout << "after:" << endl;
-		//print_backing(); cout << endl;
 	}
 
 	/**
 	 * @brief write a single bit to the stream
 	 */
 	void write_bit(bool bit) {
-		//cout << "write bit" << (bit ? "1" : "0") << endl;
 		if (0 == mask) {
 			++cur;
 			mask = sizeof(backing)*8;
@@ -234,26 +216,18 @@ public:
 		//bits before bytes
 		while (mask > 0 && pos != nbits - 1) {
 			rwsize bit = read_bit();
-			//cout << "read begin bit@" << pos << "->" << (nbits - pos - 1) << " " << bit << endl;
 			bits = bits | static_cast<rwsize>(bit << (nbits - pos - 1));
 			++pos;
 		}
 
-		//cout << "after begin bits was " (uint64_t) bits << endl;
-
 		//blocks of middle bytes
 		for (; pos < nbits - backsize + 1; pos += backsize) {
 			++cur;
-			//cout << "*cur=" << bitset<8>(*cur) << " -> " << (nbits - pos - backsize) << endl;
 			bits = bits | ((static_cast<rwsize>(*cur)) << (nbits - pos - backsize));
-			//cout << "after block was " << (uint64_t) bits << endl;
 		}
-
-		//cout << "after mid bits was" << bits << endl;
 
 		//bits after bytes
 		while (pos < nbits) {
-			//cout << "end bit@" << pos << " ->" << (nbits - pos - 1) << endl;
 			bits = bits | (read_bit() << (nbits - pos - 1));
 			++pos;
 		}

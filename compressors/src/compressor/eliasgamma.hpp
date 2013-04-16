@@ -1,7 +1,6 @@
 /**
  * eliasgamma.hpp
- * Elias-Gamma encoder/decoder
- *
+ * Elias gamma encoder/decoder
  * @author ishafer
  */
 

@@ -1,8 +1,7 @@
 /*
  * loghuffman.hpp
- *
- *  Created on: Apr 14, 2013
- *      Author: ishafer
+ * @brief log-huffman encoder/decoder
+ * @author ishafer
  */
 
 #ifndef LOGHUFFMAN_HPP_

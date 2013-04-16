@@ -1,5 +1,6 @@
 /**
  * zigzag.hpp
+ * @brief ZigZag integer signed->unsigned conversion
  *
  * Magical bit operations thanks to Protocol Buffers and
  * 	http://stackoverflow.com/questions/2210923/zig-zag-decoding

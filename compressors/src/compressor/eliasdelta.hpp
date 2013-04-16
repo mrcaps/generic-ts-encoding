@@ -1,8 +1,7 @@
 /*
  * eliasomega.hpp
- *
- *  Created on: Apr 13, 2013
- *      Author: ishafer
+ * @brief Elias omega encoder/decoder
+ * @author ishafer
  */
 
 #ifndef ELIASDELTA_HPP_

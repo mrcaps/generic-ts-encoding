@@ -1,6 +1,6 @@
 /*
  * util.hpp
- *
+ * @brief a few global utilities
  * @author ishafer
  */
 

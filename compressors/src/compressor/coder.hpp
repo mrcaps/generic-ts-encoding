@@ -1,8 +1,7 @@
-/*
+/**
  * coder.hpp
- *
- *  Created on: Apr 12, 2013
- *      Author: ishafer
+ * @brief Encoder/decoder interface
+ * @author ishafer
  */
 
 #ifndef CODER_HPP_
@@ -74,12 +73,6 @@ void test_coder_array(Coder<vT, bsT> &coder, vT *arr, uint64_t npoints) {
 
 	free(dout);
 	free(outbits);
-
-	//cout << "foo:" << endl;
-	//print_arr(arr, npoints);
-	//cout << endl;
-	//print_arr(dout, npoints);
-	//cout << endl;
 }
 
 #endif /* CODER_HPP_ */

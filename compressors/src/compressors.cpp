@@ -1,5 +1,5 @@
 /**
- * Interface for compressors
+ * Main
  * @author ishafer
  */
 #include <iostream>
