@@ -35,7 +35,6 @@ public:
 		for (uint64_t i = 0; i < insize; ++i) {
 			uint64_t v = ZIGZAG_ENC(static_cast<int64_t>(in[i])) + 1;
 			int32_t nb = nbits(v);
-			//cout << "in[" << i << "]=" << v << " (" << nb << " bits)" << endl;
 			bs.write_bits(0, nb-1);
 			bs.write_bits(v, nb);
 		}
@@ -56,7 +55,6 @@ public:
 			}
 			uint64_t b = bs.read_bits(nb);
 			uint64_t v = (b | ((bsT) 1 << nb)) - 1;
-			//cout << "got " << nb << " bits ->" << (uint64_t) v << endl;
 			out[i] = ZIGZAG_DEC(v);
 		}
 		return out;

@@ -15,6 +15,11 @@ results.deltas$src = "deltas"
 results.nodeltas = read.results("results/results-nofail-nodeltas.csv")
 results.nodeltas$src = "original"
 
+results.failed = read.results("results/results-failed.csv")
+bytesfailed = sum(results.failed$sizeorig)
+bytestotal = sum(as.numeric(subset(results.deltas, coder=="elias-gamma")$sizeorig))
+
+
 all = rbind(results.deltas, results.nodeltas)
 
 bydset = ddply(all, .(dataset,src), summarize, 

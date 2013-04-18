@@ -38,7 +38,7 @@ pair<int32_t, int32_t> bounds(huff_hist hist) {
 	if (!ok) {
 		cerr << "No bounds for an empty huff_hist!" << endl;
 	}
-	return pair<int8_t, int8_t>(minv, maxv);
+	return pair<int32_t, int32_t>(minv, maxv);
 }
 
 struct huffnode {
@@ -111,19 +111,15 @@ bool trees_equal(huffnode *t1, huffnode *t2) {
 	return (t1->val == t2->val);
 }
 
+/**
+ * Build a Huffman tree from the given histogram
+ */
 huffnode* build_tree(huff_hist &themap) {
 	//push on to priority queue
 	priority_queue<huffnode*, vector<huffnode*>, huffnode_compare > queue;
 	for (huff_hist::iterator it = themap.begin(); it != themap.end(); ++it) {
 		queue.push(new huffnode((*it).first, (*it).second));
 	}
-
-	//dump queue
-	/*
-	while (!queue.empty()) {
-		cout << "top=" << (*queue.top()) << endl;
-		queue.pop();
-	}*/
 
 	//build tree
 	while (queue.size() > 1) {
@@ -171,19 +167,25 @@ template<typename T>
 huffnode* bitstream_to_tree(BitStream<unsigned char, T> &bs) {
 	int32_t minval = bs.read_bits(7);
 	int32_t valbits = bs.read_bits(7);
-	return tree_to_bitstream_inner(bs, minval, valbits);
+	return bitstream_to_tree_inner(bs, minval, valbits);
 }
 
+/**
+ * Read a huffman tree from the given bitstream
+ * @param bs the bitstream
+ * @param minval minimum value of any node
+ * @param valbits number of bits for each value node
+ */
 template<typename T>
-huffnode* tree_to_bitstream_inner(
+huffnode* bitstream_to_tree_inner(
 		BitStream<unsigned char, T> &bs,
 		int32_t minval,
 		int32_t valbits) {
 	bool bit = bs.read_bit();
 	if (!bit) {
 		huffnode *node = new huffnode(huffnode::INTERNAL, huffnode::NOCOUNT);
-		node->left = tree_to_bitstream_inner(bs, minval, valbits);
-		node->right = tree_to_bitstream_inner(bs, minval, valbits);
+		node->left = bitstream_to_tree_inner(bs, minval, valbits);
+		node->right = bitstream_to_tree_inner(bs, minval, valbits);
 		return node;
 	} else {
 		return new huffnode(bs.read_bits(valbits) + minval, huffnode::NOCOUNT);
@@ -207,8 +209,6 @@ void tree_to_bitstream(
 	//then, the number of bits required to
 	// encode difference from the min bound.
 	uint32_t valbits = static_cast<uint32_t>(nbits(bounds.second - bounds.first));
-	//cout << "bounds difference=" << bounds.second - bounds.first << " -> nbits="
-	//		<< nbits(bounds.second-bounds.first) << endl;
 	bs.write_bits(valbits, 7);
 
 	//now write the tree
@@ -322,10 +322,6 @@ public:
 		tree_to_bitstream(bs, tree, bounds(hist));
 		vector<lookup_entry> lut = tree_to_lookup(tree);
 
-		//cout << "ENCODE tree:" << endl;
-		//print_tree(tree, 0);
-		//cout << "dictionary bits: " << bs.written_bits() << endl;
-
 		for (uint64_t i = 0; i < insize; ++i) {
 			uint64_t v = ZIGZAG_ENC(static_cast<int64_t>(in[i])) + 1;
 			uint32_t nb = nbits(v);
@@ -346,12 +342,6 @@ public:
 
 		//inflate the dictionary
 		huffnode *tree = bitstream_to_tree(bs);
-
-		//cout << "DECODE tree:" << endl;
-		//print_tree(tree, 0);
-		//cout << "bitstream is now:" << endl;
-		//bs.print_backing();
-		//cout << flush << endl;
 
 		for (uint64_t i = 0; i < *outsize; ++i) {
 			int32_t nb = next_huffcode(bs, tree);
@@ -388,16 +378,11 @@ void test_tree() {
 
 	assert( trees_equal(root, tree) );
 
-	//print_tree(tree, 0);
-
 	vector<lookup_entry> lut = tree_to_lookup(tree);
 
 	//to print the lookup table
 	int32_t lutdx = 0;
 	for (vector<lookup_entry>::iterator it = lut.begin(); it != lut.end(); ++it) {
-		//cout << "lut i=" <<
-		//		lutdx << " k=" <<
-		//		bitset<8>((*it).first) << " v=" << (*it).second << endl;
 		uint32_t bits = (*it).first;
 		int32_t nbits = (*it).second;
 		switch (lutdx) {

@@ -9,6 +9,11 @@
 
 const float BUF_SCALE_FACTOR = 2.0;
 
+/**
+ * @brief Interface to an encoder/decoder
+ * vT: value type
+ * bsT: bitstream backing type
+ */
 template<typename vT, typename bsT>
 class Coder {
 public:
@@ -39,6 +44,9 @@ public:
 
 #define NBITS_WORD(t, x) (sizeof(t)*8 - __builtin_clz(x))
 
+/**
+ * Count the number of bits required to represent x
+ */
 template<typename T>
 uint32_t nbits(T x) {
 	if (sizeof(T) == sizeof(intptr_t)) {
@@ -53,6 +61,12 @@ uint32_t nbits(T x) {
 	}
 }
 
+/**
+ * @brief Do a roundtrip encoding
+ * @param coder the encoder/decoder to use
+ * @param arr the array to encode/decode
+ * @param npoints number of points in the array
+ */
 template<typename vT, typename bsT>
 void test_coder_array(Coder<vT, bsT> &coder, vT *arr, uint64_t npoints) {
 	unsigned char *outbits = static_cast<unsigned char*>(
