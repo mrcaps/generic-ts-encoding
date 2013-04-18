@@ -35,13 +35,13 @@ ggplot(bydset, aes(
   y=sizemean, ymin=sizemean-sizesd/2, ymax=sizemean+sizesd/2, color=src,
   group=src)) +
   geom_point(size=4, position="dodge") +
-  scale_y_log10("Uncompressed / compressed ratio (log scale)", 
+  scale_y_log10("Uncompressed/comp. (log scale)", 
                 breaks=c(1,2,4,8,16,32,64)) +
   scale_x_discrete("Dataset", breaks=NULL) +
   theme(axis.ticks.x = element_blank(), legend.position="top") +
   coord_cartesian(ylim=c(0.5,100)) +
-  theme(legend.text=element_text(size=18))
-ggsave("figs/deltas-dataset-sizes.pdf", width=5, height=4)
+  theme(legend.text=element_text(size=12))
+ggsave("figs/deltas-dataset-sizes.pdf", width=4, height=3)
 
 byenc = ddply(all, .(coder,src), summarize,
               sizemean=mean(sizeorig/sizecomp), 
@@ -52,8 +52,8 @@ ggplot(byenc, aes(
   y=sizemean,
   fill=src)) +
   geom_bar(stat="identity", position="dodge") +
-  scale_y_continuous("Uncompressed / compressed ratio") +
+  scale_y_continuous("Uncompressed/comp.") +
   scale_x_discrete("Encoder") +
   theme(axis.ticks.x = element_blank(), legend.position="top") +
-  theme(legend.text=element_text(size=18))
-ggsave("figs/deltas-coder-sizes.pdf", width=5, height=4)
+  theme(legend.text=element_text(size=12))
+ggsave("figs/deltas-coder-sizes.pdf", width=4, height=3)
