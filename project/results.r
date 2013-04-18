@@ -73,3 +73,12 @@ ggplot(results.bydset, aes(
   coord_cartesian(ylim=c(0.5,100))
 ggsave("figs/dataset-sizes.pdf", width=5, height=4)
 
+if (FALSE) {
+  ggplot(head(results,40000), aes(x=sizeorig/enctime/1e6, y=sizeorig/sizecomp, color=coder)) +
+    geom_point(alpha=0.15) +
+    scale_y_log10("Uncompressed / compressed ratio (log scale)", breaks=c(1,2,4,8)) +
+    scale_x_log10("Compression rate (MB/s) (log scale)", breaks=c(10,20,40,80)) +
+    guides(color=guide_legend(override.aes=list(alpha=1, size=8))) +
+    theme(legend.position="none")
+  ggsave("figs/all-results-scatter.pdf", width=4, height=5.5)
+}
