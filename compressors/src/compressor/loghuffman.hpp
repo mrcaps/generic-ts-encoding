@@ -332,7 +332,7 @@ public:
 			//write huffman code for nbits
 			bs.write_bits(lut[nb].first, lut[nb].second);
 			//write the value
-			bs.write_bits(v, nb);
+			bs.write_bits(v & ~(static_cast<uint64_t>(1) << nb), nb-1);
 		}
 		*outsize = bs.written_size();
 		return bs.get_backing();
@@ -355,7 +355,7 @@ public:
 
 		for (uint64_t i = 0; i < *outsize; ++i) {
 			int32_t nb = next_huffcode(bs, tree);
-			uint64_t v = bs.read_bits(nb);
+			uint64_t v = bs.read_bits(nb-1) | (static_cast<uint64_t>(1) << (nb-1));
 			out[i] = ZIGZAG_DEC(v - 1);
 		}
 		return out;

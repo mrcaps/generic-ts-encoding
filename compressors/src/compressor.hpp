@@ -60,14 +60,23 @@ const Coder<vT, bsT> *get_coder(CoderName name) {
 	}
 }
 
+/**
+ * @param deltaenc should we delta-encode?
+ * @param name the name of the encoder
+ * @param asbytes raw data
+ * @param npoints number of points in the raw data
+ */
 template<typename vT, typename bsT>
-void test_roundtrip_inner(CoderName name, void *asbytes, uint64_t npoints) {
+void test_roundtrip_inner(
+		bool deltaenc, CoderName name, void *asbytes, uint64_t npoints) {
 	//npoints = 20;
 	const Coder<vT, bsT> *coder = get_coder<vT, bsT>(name);
 
 	Timer timer;
 
-	delta_enc_inplace((vT*) asbytes, npoints);
+	if (deltaenc) {
+		delta_enc_inplace((vT*) asbytes, npoints);
+	}
 
 	unsigned char *outbits = (unsigned char*) calloc(npoints*BUF_SCALE_FACTOR+12, sizeof(vT));
 	uint64_t orig_outsize = sizeof(vT)*(npoints*BUF_SCALE_FACTOR+12);
@@ -99,21 +108,21 @@ void test_roundtrip_inner(CoderName name, void *asbytes, uint64_t npoints) {
 	delete coder;
 }
 
-void test_roundtrip(CoderName name, vstream vs) {
+void test_roundtrip(bool deltaenc, CoderName name, vstream vs) {
 	void *bytes = read_fully(vs);
 	//surely there must be a cleaner way of doing this?
 	switch (vs.vsize) {
 	case 1:
-		test_roundtrip_inner<int8_t, uint8_t>(name, bytes, vs.npoints);
+		test_roundtrip_inner<int8_t, uint8_t>(deltaenc, name, bytes, vs.npoints);
 		break;
 	case 2:
-		test_roundtrip_inner<int16_t, uint16_t>(name, bytes, vs.npoints);
+		test_roundtrip_inner<int16_t, uint16_t>(deltaenc, name, bytes, vs.npoints);
 		break;
 	case 4:
-		test_roundtrip_inner<int32_t, uint32_t>(name, bytes, vs.npoints);
+		test_roundtrip_inner<int32_t, uint32_t>(deltaenc, name, bytes, vs.npoints);
 		break;
 	case 8:
-		test_roundtrip_inner<int64_t, uint64_t>(name, bytes, vs.npoints);
+		test_roundtrip_inner<int64_t, uint64_t>(deltaenc, name, bytes, vs.npoints);
 		break;
 	default:
 		cerr << "Unknown value size:" << vs.vsize << endl;
@@ -121,13 +130,13 @@ void test_roundtrip(CoderName name, vstream vs) {
 	}
 }
 
-void test_roundtrips() {
+void test_roundtrips(bool deltaenc) {
 	vector<vstream> streams = get_test_streams();
 	for (vector<vstream>::iterator it = streams.begin(); it != streams.end(); ++it) {
-		test_roundtrip(ELIAS_GAMMA, *it);
-		test_roundtrip(ELIAS_DELTA, *it);
-		test_roundtrip(LOG_HUFFMAN, *it);
-		test_roundtrip(ZLIB, *it);
+		test_roundtrip(deltaenc, ELIAS_GAMMA, *it);
+		test_roundtrip(deltaenc, ELIAS_DELTA, *it);
+		test_roundtrip(deltaenc, LOG_HUFFMAN, *it);
+		test_roundtrip(deltaenc, ZLIB, *it);
 	}
 }
 
@@ -155,7 +164,7 @@ void test_compressor()  {
 	test_zlib();
 
 	//roundtrips
-	test_roundtrips();
+	test_roundtrips(false);
 }
 
 #endif /* COMPRESSOR_HPP_ */

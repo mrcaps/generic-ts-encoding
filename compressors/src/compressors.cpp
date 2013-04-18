@@ -16,25 +16,25 @@ void test_all() {
 	test_compressor();
 }
 
-void print_result(CoderName name, vstream_res &res) {
+void print_result(bool deltaenc, CoderName name, vstream_res &res) {
 	cout << res.p.vname << "," <<
 			res.p.tpath << "," <<
 			res.p.vpath << "," <<
 			res.p.vsize << ",";
-	test_roundtrip(name, res.p);
+	test_roundtrip(deltaenc, name, res.p);
 }
 
-void run(int32_t limit) {
+void run(bool deltaenc, int32_t limit) {
 	MetaStore ms("G:/tmp/combined.db", Config::get("dataloc"));
 	ms.open();
 	ms.start_iter();
 
 	int sdx = 0;
 	for (vstream_res res; (res = ms.next_row()).success; ) {
-		print_result(ELIAS_GAMMA, res);
-		print_result(ELIAS_DELTA, res);
-		print_result(LOG_HUFFMAN, res);
-		print_result(ZLIB, res);
+		print_result(deltaenc, ELIAS_GAMMA, res);
+		print_result(deltaenc, ELIAS_DELTA, res);
+		print_result(deltaenc, LOG_HUFFMAN, res);
+		print_result(deltaenc, ZLIB, res);
 
 		if (++sdx > limit) {
 			cout << "STOPPED" << endl;
@@ -60,9 +60,9 @@ int main(int argc, char* argv[]) {
 	if (fn == "test") {
 		test_all();
 	} else if (fn == "runall") {
-		run(numeric_limits<int32_t>::max());
+		run(true, numeric_limits<int32_t>::max());
 	} else if (fn == "runsome") {
-		run(100);
+		run(true, 100);
 	}
 
 	return 0;
