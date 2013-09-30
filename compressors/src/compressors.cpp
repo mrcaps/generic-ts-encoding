@@ -34,6 +34,7 @@ void run(bool deltaenc, int32_t limit) {
 		print_result(deltaenc, ELIAS_GAMMA, res);
 		print_result(deltaenc, ELIAS_DELTA, res);
 		print_result(deltaenc, LOG_HUFFMAN, res);
+		print_result(deltaenc, LOG_HUFFMAN_RLE, res);
 		print_result(deltaenc, ZLIB, res);
 
 		if (++sdx > limit) {
@@ -64,6 +65,8 @@ int main(int argc, char* argv[]) {
 	} else if (fn == "runsome") {
 		run(true, 100);
 	}
+
+	cout << "DONE!" << endl;
 
 	return 0;
 }

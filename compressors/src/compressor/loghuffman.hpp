@@ -219,6 +219,7 @@ void tree_to_bitstream(
  * Lookup entries are pairs of (bits, nbits)
  */
 typedef pair<uint32_t, int32_t> lookup_entry;
+static const lookup_entry LOOKUP_NONE = lookup_entry(0, -1);
 
 /**
  * Reverse bits in a byte
@@ -250,7 +251,7 @@ uint64_t reverse_bits_64(uint64_t v) {
  * Lookup vector for encoding
  * @param vec (out param) vector to fill with LUT entries
  * @param node current recursion point
- * @param bits_so_far bit string to this pont in the tree
+ * @param bits_so_far bit string to this point in the tree
  * @param depth current depth in the tree
  */
 void tree_to_lookup_inner(
@@ -276,6 +277,9 @@ void tree_to_lookup_inner(
  */
 vector<lookup_entry> tree_to_lookup(huffnode *node) {
 	vector<lookup_entry> entries(64);
+	for (int i = 0; i < entries.size(); ++i) {
+		entries[i] = LOOKUP_NONE;
+	}
 	tree_to_lookup_inner(entries, node, 0, 0);
 	return entries;
 }
@@ -355,6 +359,151 @@ private:
 	DISALLOW_EVIL_CONSTRUCTORS(LogHuffman);
 };
 
+
+template<typename vT, typename bsT>
+class LogHuffmanRLE : public Coder<vT, bsT> {
+public:
+	LogHuffmanRLE() {};
+	~LogHuffmanRLE() {};
+
+	unsigned char* enc(
+			unsigned char *out,
+			uint64_t *outsize,
+			vT *in,
+			uint64_t insize) const {
+		BitStream<unsigned char, bsT> bs(out, *outsize, WRITE);
+		//build probability distribution
+		huff_hist hist;
+		uint64_t prev = numeric_limits<uint64_t>::max();
+		uint64_t count = 0;
+		for (uint64_t i = 0; i < insize; ++i) {
+			uint64_t v = ZIGZAG_ENC(static_cast<int64_t>(in[i]));
+			int32_t nb = nbits(v + 1);
+			if (hist.find(nb) == hist.end()) {
+				hist[nb] = 0;
+			}
+			hist[nb] += 1;
+
+			if (prev == v) {
+				++count;
+			} else if (count != 0) {
+				int32_t nb = nbits(count);
+				if (hist.find(nb) == hist.end()) {
+					hist[nb] = 0;
+				}
+				hist[nb] += 1;
+				count = 0;
+			}
+
+			prev = v;
+		}
+
+		if (count != 0) {
+			int32_t nb = nbits(count);
+			if (hist.find(nb) == hist.end()) {
+				hist[nb] = 0;
+			}
+			hist[nb] += 1;
+			count = 0;
+		}
+
+		huffnode *tree = build_tree(hist);
+		//send the tree
+		tree_to_bitstream(bs, tree, bounds(hist));
+		vector<lookup_entry> lut = tree_to_lookup(tree);
+
+		prev = numeric_limits<uint64_t>::max();
+		uint64_t pprev = numeric_limits<uint64_t>::max() - 1;
+		count = 0;
+		for (uint64_t i = 0; i < insize; ++i) {
+			uint64_t v = ZIGZAG_ENC(static_cast<int64_t>(in[i])) + 1;
+
+			if (prev == pprev) {
+				if (v == prev) {
+					//add to an existing run
+					pprev = prev;
+					prev = v;
+					++count;
+					continue;
+				} else {
+					//write out the run
+					++count;
+					uint32_t nbc = nbits(count);
+					if (lut[nbc].second == LOOKUP_NONE.second) {
+						cerr << "NO LUT ENTRY!!!!!" << endl;
+					}
+					bs.write_bits(lut[nbc].first, lut[nbc].second);
+					bs.write_bits(count & ~(static_cast<uint64_t>(1) << nbc), nbc-1);
+					count = 0;
+				}
+			}
+
+			pprev = prev;
+			prev = v;
+
+			uint32_t nb = nbits(v);
+			//write huffman code for nbits
+			bs.write_bits(lut[nb].first, lut[nb].second);
+			//write the value
+			bs.write_bits(v & ~(static_cast<uint64_t>(1) << nb), nb-1);
+		}
+
+		if (prev == pprev) {
+			++count;
+			uint32_t nbc = nbits(count);
+			if (lut[nbc].second == LOOKUP_NONE.second) {
+				cerr << "NO LUT ENTRY!!!!!" << endl;
+			}
+			//write huffman code for nbits
+			bs.write_bits(lut[nbc].first, lut[nbc].second);
+			//write the value
+			bs.write_bits(count & ~(static_cast<uint64_t>(1) << nbc), nbc-1);
+		}
+
+		*outsize = bs.written_size();
+		return bs.get_backing();
+	}
+
+	vT* dec(vT *out,
+			uint64_t *outsize,
+			unsigned char *in,
+			uint64_t insize) const {
+		BitStream<unsigned char, bsT> bs(in, insize, READ);
+
+		//inflate the dictionary
+		huffnode *tree = bitstream_to_tree(bs);
+
+		uint64_t prev = numeric_limits<uint64_t>::max();
+		bool run = false;
+		for (uint64_t i = 0; i < *outsize; ++i) {
+			int32_t nb = next_huffcode(bs, tree);
+			uint64_t v = bs.read_bits(nb-1) | (static_cast<uint64_t>(1) << (nb-1));
+
+			if (run) {
+				for (uint64_t k = 0; k < v - 1; ++k) {
+					out[i] = ZIGZAG_DEC(prev - 1);
+					++i;
+				}
+				--i;
+				run = false;
+				continue;
+			}
+
+			if (v == prev) {
+				run = true;
+			}
+			prev = v;
+
+			out[i] = ZIGZAG_DEC(v - 1);
+		}
+		return out;
+	}
+
+private:
+	DISALLOW_EVIL_CONSTRUCTORS(LogHuffmanRLE);
+};
+
+
 /**
  * Histogram entry
  */
@@ -429,9 +578,27 @@ void test_loghuffman_basic() {
 	test_coder_array(coder64, (int64_t*) din3, sizeof(din3)/sizeof(int64_t));
 }
 
+void test_loghuffman_rle_basic() {
+	LogHuffmanRLE<int32_t, uint32_t> coder32;
+	LogHuffmanRLE<int64_t, uint64_t> coder64;
+
+	int32_t din[] = {1, 2, 4, 5, 6, -3, 8};
+	test_coder_array(coder32, (int32_t*) din, sizeof(din)/sizeof(int32_t));
+
+	int32_t din2[] = {0, 181817, 363636, 545454, 363636, 363636, 545454, 1, 2, 3, 4, 5};
+	test_coder_array(coder32, (int32_t*) din2, sizeof(din2)/sizeof(int32_t));
+
+	int64_t din3[] = {31014740000, 31000620000, 30985390000, 30968450000, 30950330000};
+	test_coder_array(coder64, (int64_t*) din3, sizeof(din3)/sizeof(int64_t));
+
+	int32_t din4[] = {0, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 4, 4, 4, 4, 4, 4};
+	test_coder_array(coder32, (int32_t*) din4, sizeof(din4)/sizeof(int32_t));
+}
+
 void test_loghuffman() {
 	test_tree();
 	test_loghuffman_basic();
+	test_loghuffman_rle_basic();
 }
 
 #endif /* LOGHUFFMAN_HPP_ */

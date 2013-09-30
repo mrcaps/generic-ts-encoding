@@ -9,7 +9,14 @@ theme_update(plot.margin = unit(c(0,0,0,0), "cm"))
 
 source("common.r")
 
-results = read.results("results/results-nofail.csv")
+results.na = read.results("results/results-nofail-rle.csv")
+#xxx: deal with last NA
+results = na.omit(results.na)
+results = subset(results, coder != "log-huffman")
+results$sizeorig = as.numeric(results$sizeorig)
+results$sizecomp = as.numeric(results$sizecomp)
+results$dectime = as.numeric(results$dectime)
+results$enctime = as.numeric(results$enctime)
 
 results.bydset = ddply(results, .(dataset,coder), summarize, 
                        sizemean=mean(sizeorig/sizecomp), 
@@ -67,11 +74,14 @@ ggplot(results.bydset, aes(
   group=coder)) +
   geom_pointrange(size=1) +
   scale_y_log10("Uncompressed / compressed ratio (log scale)", 
-                breaks=c(1,2,4,8,16,32,64)) +
-  scale_x_discrete("Dataset", breaks=NULL) +
-  theme(axis.ticks.x = element_blank(), legend.position="top") +
-  coord_cartesian(ylim=c(0.5,100))
+                breaks=c(1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192)) +
+  scale_x_discrete("Dataset") +
+#  theme(axis.text.x=element_text(angle=-90, hjust=0), legend.position="top") +
+  theme(axis.text.x=element_blank(), legend.position="top") + 
+  coord_cartesian(ylim=c(0.5,5000))
 ggsave("figs/dataset-sizes.pdf", width=5, height=4)
+
+bydset.smean = results.bydset[order(results.bydset$sizemean) ,]
 
 if (FALSE) {
   ggplot(head(results,40000), aes(x=sizeorig/enctime/1e6, y=sizeorig/sizecomp, color=coder)) +

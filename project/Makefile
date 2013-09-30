@@ -11,6 +11,9 @@ run:
 combine:
 	$(PY) combinedb.py $(OUT)
 
+ingest:
+	$(PY) ingest.py
+
 test:
 	$(PY) convert.py
 #	$(PY) convertmany.py

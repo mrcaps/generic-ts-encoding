@@ -29,6 +29,7 @@ enum CoderName {
 	ELIAS_GAMMA,
 	ELIAS_DELTA,
 	LOG_HUFFMAN,
+	LOG_HUFFMAN_RLE,
 	ZLIB
 };
 
@@ -38,6 +39,7 @@ ostream& operator<<(ostream& os, const CoderName& coder)
 		case ELIAS_GAMMA: os << "elias-gamma"; break;
 		case ELIAS_DELTA: os << "elias-delta"; break;
 		case LOG_HUFFMAN: os << "log-huffman"; break;
+		case LOG_HUFFMAN_RLE: os << "log-huffman-rle"; break;
 		case ZLIB: os << "zlib"; break;
 	}
 	return os;
@@ -52,6 +54,8 @@ const Coder<vT, bsT> *get_coder(CoderName name) {
 		return new EliasDelta<vT, bsT>;
 	case LOG_HUFFMAN:
 		return new LogHuffman<vT, bsT>;
+	case LOG_HUFFMAN_RLE:
+		return new LogHuffmanRLE<vT, bsT>;
 	case ZLIB:
 		return new ZLib<vT, bsT>;
 	default:
@@ -68,7 +72,7 @@ const Coder<vT, bsT> *get_coder(CoderName name) {
  */
 template<typename vT, typename bsT>
 void test_roundtrip_inner(
-		bool deltaenc, CoderName name, void *asbytes, uint64_t npoints) {
+		const char* toprint, bool deltaenc, CoderName name, void *asbytes, uint64_t npoints) {
 	//npoints = 20;
 	const Coder<vT, bsT> *coder = get_coder<vT, bsT>(name);
 
@@ -92,15 +96,17 @@ void test_roundtrip_inner(
 
 	double tdec = timer.elapsed();
 
-	cout << name << "," << npoints*sizeof(vT) << "," << outsize << "," << tenc << "," << tdec;
-
-	//print_arr((T*) asbytes, npoints);
-	//cout << endl;
-	//print_arr(dout, npoints);
 	if ( 0 == memcmp(dout, asbytes, npoints*sizeof(vT)) ) {
-		cout << endl;
+		cout << toprint << name << "," << npoints*sizeof(vT) <<
+				"," << outsize << "," << tenc << "," << tdec << endl;
 	} else {
-		cout << "FAIL" << endl;
+		cout << toprint << name << "FAIL" << endl;
+		if (false) {
+			print_arr((vT*) asbytes, npoints);
+			cout << endl;
+			cout << "!=" << endl;
+			print_arr(dout, npoints);
+		}
 	}
 
 	free(outbits);
@@ -113,16 +119,16 @@ void test_roundtrip(bool deltaenc, CoderName name, vstream vs) {
 	//surely there must be a cleaner way of doing this?
 	switch (vs.vsize) {
 	case 1:
-		test_roundtrip_inner<int8_t, uint8_t>(deltaenc, name, bytes, vs.npoints);
+		test_roundtrip_inner<int8_t, uint8_t>("", deltaenc, name, bytes, vs.npoints);
 		break;
 	case 2:
-		test_roundtrip_inner<int16_t, uint16_t>(deltaenc, name, bytes, vs.npoints);
+		test_roundtrip_inner<int16_t, uint16_t>("", deltaenc, name, bytes, vs.npoints);
 		break;
 	case 4:
-		test_roundtrip_inner<int32_t, uint32_t>(deltaenc, name, bytes, vs.npoints);
+		test_roundtrip_inner<int32_t, uint32_t>("", deltaenc, name, bytes, vs.npoints);
 		break;
 	case 8:
-		test_roundtrip_inner<int64_t, uint64_t>(deltaenc, name, bytes, vs.npoints);
+		test_roundtrip_inner<int64_t, uint64_t>("", deltaenc, name, bytes, vs.npoints);
 		break;
 	default:
 		cerr << "Unknown value size:" << vs.vsize << endl;
@@ -136,6 +142,7 @@ void test_roundtrips(bool deltaenc) {
 		test_roundtrip(deltaenc, ELIAS_GAMMA, *it);
 		test_roundtrip(deltaenc, ELIAS_DELTA, *it);
 		test_roundtrip(deltaenc, LOG_HUFFMAN, *it);
+		test_roundtrip(deltaenc, LOG_HUFFMAN_RLE, *it);
 		test_roundtrip(deltaenc, ZLIB, *it);
 	}
 }

@@ -79,10 +79,10 @@ void test_coder_array(Coder<vT, bsT> &coder, vT *arr, uint64_t npoints) {
 	if ( memcmp(dout, arr, npoints*sizeof(vT)) ) {
 		cout << "Roundtrip error!" << endl;
 		cout << " in:";
-		print_arr(arr, 20);
+		print_arr(arr, min(static_cast<uint64_t>(20), npoints));
 		cout << endl;
 		cout << "out:";
-		print_arr(dout, 20);
+		print_arr(dout, min(static_cast<uint64_t>(20), npoints));
 	}
 
 	free(dout);
